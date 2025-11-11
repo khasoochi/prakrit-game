@@ -43,9 +43,15 @@ class PrakritDatabaseTurso:
             raise ValueError("Turso URL and token are required. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN")
 
         try:
-            # Create Turso client
+            # Convert libsql:// URL to https:// for HTTP-based access (avoids event loop issues)
+            if self.turso_url.startswith('libsql://'):
+                http_url = 'https://' + self.turso_url[9:]
+            else:
+                http_url = self.turso_url
+
+            # Create Turso client with HTTP protocol (synchronous, no event loop needed)
             self.client = create_client(
-                url=self.turso_url,
+                url=http_url,
                 auth_token=self.turso_token
             )
             self.connected = True
