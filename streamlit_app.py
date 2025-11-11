@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from core.db_handler_web import PrakritDatabaseWeb
+from core.db_handler_turso import PrakritDatabaseTurso
 from core.script_converter import ScriptConverter
 
 # Load environment variables
@@ -76,18 +76,16 @@ st.markdown("""
 
 @st.cache_resource
 def init_database():
-    """Initialize database connection (cached)."""
-    db_url = os.getenv('DATABASE_URL')
+    """Initialize Turso database connection (cached)."""
+    turso_url = os.getenv('TURSO_DATABASE_URL')
+    turso_token = os.getenv('TURSO_AUTH_TOKEN')
 
     try:
-        if db_url:
-            db = PrakritDatabaseWeb(db_url=db_url)
-        else:
-            # Fallback to SQLite
-            db = PrakritDatabaseWeb(use_sqlite=True)
+        db = PrakritDatabaseTurso(turso_url=turso_url, turso_token=turso_token)
         return db
     except Exception as e:
         st.error(f"Database initialization failed: {e}")
+        st.error("Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables")
         return None
 
 

@@ -1,5 +1,15 @@
 {
-  "buildCommand": "pip install -r requirements_web.txt",
-  "devCommand": "streamlit run streamlit_app.py",
-  "installCommand": "pip install -r requirements_web.txt"
+  "version": 2,
+  "builds": [
+    {
+      "src": "streamlit_app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "streamlit_app.py"
+    }
+  ]
 }
