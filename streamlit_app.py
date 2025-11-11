@@ -7,7 +7,6 @@ A unified web app for learning Prakrit through 5 integrated games.
 import streamlit as st
 import os
 import sys
-from dotenv import load_dotenv
 
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -15,8 +14,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core.db_handler_turso import PrakritDatabaseTurso
 from core.script_converter import ScriptConverter
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (for local development)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not available (on Streamlit Cloud), that's okay
+    pass
 
 # Page configuration
 st.set_page_config(
@@ -77,15 +81,27 @@ st.markdown("""
 @st.cache_resource
 def init_database():
     """Initialize Turso database connection (cached)."""
-    turso_url = os.getenv('TURSO_DATABASE_URL')
-    turso_token = os.getenv('TURSO_AUTH_TOKEN')
+    # Try Streamlit Cloud secrets first, then environment variables
+    try:
+        turso_url = st.secrets.get("TURSO_DATABASE_URL")
+        turso_token = st.secrets.get("TURSO_AUTH_TOKEN")
+    except (AttributeError, FileNotFoundError):
+        # Not on Streamlit Cloud or secrets not configured, use env vars
+        turso_url = os.getenv('TURSO_DATABASE_URL')
+        turso_token = os.getenv('TURSO_AUTH_TOKEN')
+
+    if not turso_url or not turso_token:
+        st.error("⚠️ Database credentials not configured!")
+        st.error("Please add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN to your Streamlit secrets.")
+        st.info("Go to: App menu → Settings → Secrets")
+        return None
 
     try:
         db = PrakritDatabaseTurso(turso_url=turso_url, turso_token=turso_token)
         return db
     except Exception as e:
-        st.error(f"Database initialization failed: {e}")
-        st.error("Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables")
+        st.error(f"❌ Database connection failed: {e}")
+        st.error("Please check your Turso credentials.")
         return None
 
 
